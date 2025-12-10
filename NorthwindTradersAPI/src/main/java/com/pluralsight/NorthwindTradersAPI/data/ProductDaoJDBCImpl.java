@@ -1,9 +1,13 @@
 package com.pluralsight.NorthwindTradersAPI.data;
 
 import com.pluralsight.NorthwindTradersAPI.model.Product;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,21 +17,27 @@ public class ProductDaoJDBCImpl implements ProductDao{
 
     private DataSource dataSource;
 
+@Autowired
     public ProductDaoJDBCImpl(DataSource dataSource) {
+        this.products = new ArrayList<>();
         this.dataSource = dataSource;
     }
 
-    public ProductDaoJDBCImpl() {
-        this.products = new ArrayList<>();
-
-        products.add(new Product(1, 10, "Laptop", 899.99));
-        products.add(new Product(2, 20, "Wireless Mouse", 19.99));
-        products.add(new Product(3, 20, "Mechanical Keyboard", 59.99));
-        products.add(new Product(4, 30, "LED Monitor", 149.49));
-        products.add(new Product(5, 40, "USB-C Charger", 24.99));
-    }
-
     public List<Product> getAll() {
+        this.products.clear();
+        String query = "select p.productID, c.categoryID, p.productName, p.UnitPrice from products as p join categories as c  on (c.categoryID = p.categoryID)";
+
+        try {
+            Connection connection = dataSource.getConnection();
+            try(PreparedStatement statement = connection.prepareStatement(query)) {
+                ResultSet set = statement.executeQuery();
+                while(set.next()) {
+                    products.add(new Product(set.getInt(1), set.getInt(2), set.getString(3), set.getDouble(4)));
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         return this.products;
     }
 
