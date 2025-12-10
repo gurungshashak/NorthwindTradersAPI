@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,11 +44,31 @@ public class ProductDaoJDBCImpl implements ProductDao{
 
     @Override
     public Product getById(int productId) {
-        for (Product p : products) {
-            if (p.getProductId() == productId) {
-                return p;
+        String query = "SELECT ProductID, ProductName, UnitPrice, CategoryID FROM Products WHERE ProductID = ?";
+        Product product = null;
+
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setInt(1, productId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        product = new Product(
+                                rs.getInt("ProductID"),
+                                rs.getInt("CategoryID"),
+                                rs.getString("ProductName"),
+                                rs.getDouble("UnitPrice")
+                        );
+                    }
+                }
+
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return null;
+
+
+        return product;
     }
+
 }

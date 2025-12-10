@@ -1,8 +1,14 @@
 package com.pluralsight.NorthwindTradersAPI.data;
 
 import com.pluralsight.NorthwindTradersAPI.model.Category;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,28 +16,53 @@ import java.util.List;
 public class CategoryDaoJDBCImpl implements CategoryDao{
     private ArrayList<Category> categories;
 
-    public CategoryDaoJDBCImpl() {
+    private DataSource dataSource;
+
+    @Autowired
+    public CategoryDaoJDBCImpl(DataSource dataSource) {
         this.categories = new ArrayList<>();
-
-        categories.add(new Category(10, "Electronics"));
-        categories.add(new Category(20, "Accessories"));
-        categories.add(new Category(30, "Displays"));
-        categories.add(new Category(40, "Chargers"));
-        categories.add(new Category(50, "Networking"));
-
+        this.dataSource = dataSource;
     }
     @Override
     public List<Category> getAll() {
+        this.categories.clear();
+        String sql = "SELECT CategoryID, CategoryName FROM Categories;";
+        try (Connection connection = dataSource.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet rows = statement.executeQuery();
+            while (rows.next()) {
+                this.categories.add(new Category(rows.getInt(1), rows.getString(2)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         return this.categories;
     }
 
     @Override
     public Category getById(int categoryId) {
-         for (Category c : categories) {
-            if (c.getCategoryId() == categoryId) {
-                return c;
+        String query = "SELECT CategoryID, CategoryName FROM Categories WHERE CategoryID = ?";
+        Category category = null;
+
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setInt(1, categoryId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        category = new Category(
+                                rs.getInt("CategoryID"),
+                                rs.getString("CategoryName")
+                        );
+                    }
+                }
+
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return null;
+
+        return category;
     }
 }
