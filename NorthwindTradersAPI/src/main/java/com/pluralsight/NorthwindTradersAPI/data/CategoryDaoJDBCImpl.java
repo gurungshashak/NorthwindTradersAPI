@@ -29,7 +29,7 @@ public class CategoryDaoJDBCImpl implements CategoryDao{
     public Category getById(int categoryId) {
          for (Category c : categories) {
             if (c.getCategoryId() == categoryId) {
-                return c; //
+                return c;
             }
         }
         return null;

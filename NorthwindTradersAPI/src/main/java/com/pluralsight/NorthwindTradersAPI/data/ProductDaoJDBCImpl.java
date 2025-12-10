@@ -3,12 +3,19 @@ package com.pluralsight.NorthwindTradersAPI.data;
 import com.pluralsight.NorthwindTradersAPI.model.Product;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class ProductDaoJDBCImpl implements ProductDao{
     private ArrayList<Product> products;
+
+    private DataSource dataSource;
+
+    public ProductDaoJDBCImpl(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     public ProductDaoJDBCImpl() {
         this.products = new ArrayList<>();
